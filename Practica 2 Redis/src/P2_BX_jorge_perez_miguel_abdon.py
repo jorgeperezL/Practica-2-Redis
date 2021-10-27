@@ -4,12 +4,10 @@ Created on 26 oct 2021
 @author: jorge
 
 '''
-import time
 import redis
-from asyncio.tasks import sleep
+from pymongo import MongoClient
 __author__ = 'jorge_perez y miguel_abdon'
 
-from pymongo import MongoClient
 
 class Model:
     """ Prototipo de la clase modelo
