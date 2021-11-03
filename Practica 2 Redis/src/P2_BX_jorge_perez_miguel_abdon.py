@@ -34,18 +34,19 @@ class Model:
                 return          
         self.__dict__.update(kwargs)
 
-    def save(self):
-        for required in self.required_vars:
-            if self.__dict__.get(required.lower()) is None:
-                print("Coleccion no guardada en base de datos")
-                return
-                       
-        if self.db.find({"ref": self.ref}).count() > 0:
-            self.db.update({"ref": self.ref}, self.__dict__)
-            print("Se ha actualizado")
-        else:
-            self.db.insert_one(self.__dict__)
+    def save(self):               
+        if not self.__dict__.get('_id'):
+            item_id = self.dbmongo.insert_one(self.__dict__).inserted_id
+            self.__dict__.update(_id = item_id)
+            print(item_id)
+            self.dbredis.hmset(str(item_id), self.__dict__)
             print("Coleccion guardada en base de datos")
+        else:
+            self.dbmongo.update({"_id": self._id}, self.__dict__)
+            self.dbredis.hmset(self._id, self.__dict__)
+            print("Se ha actualizado")
+            
+            
 
     def set(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -56,7 +57,10 @@ class Model:
         """ 
         if not cls.dbredis.get(filter):
             documento = cls.db.find_one(filter)
-            cls.dbredis.hmset(filter, documento, ex = 60)
+            f = open ("id.txt", "w")
+            f.write(documento.get('_id')+"\n")
+            f.close()
+            cls.dbredis.hmset(documento.get('_id'), documento, ex = 60)
             return documento
         else:
             documento = cls.dbredis.get(filter)
@@ -91,8 +95,10 @@ class Persona(Model):
 if __name__ == '__main__':
     client = MongoClient('localhost')
     redis = redis.Redis(host= 'localhost')
-    client.p1
     Persona.init_class(client.p1.persona, redis, 'persona.txt')
+    
+    persona = Persona(nombre = "jorge", apellido = "Perez").save()
+    #persona.save()
     
     #redis.set('prueba', 'Hello from Python!', ex = 1)
     #value = redis.get('prueba')
