@@ -98,6 +98,7 @@ if __name__ == '__main__':
     Persona.init_class(client.p1.persona, redis, 'persona.txt')
     
     persona = Persona(nombre = "jorge", apellido = "Perez").save()
+    
     #persona.save()
     
     #redis.set('prueba', 'Hello from Python!', ex = 1)
