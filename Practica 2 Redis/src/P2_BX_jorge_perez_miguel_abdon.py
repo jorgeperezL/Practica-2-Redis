@@ -99,6 +99,7 @@ if __name__ == '__main__':
     
     persona = Persona(nombre = "jorge", apellido = "Perez").save()
     
+    
     #persona.save()
     
     #redis.set('prueba', 'Hello from Python!', ex = 1)
