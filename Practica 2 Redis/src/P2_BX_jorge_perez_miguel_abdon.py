@@ -1,12 +1,9 @@
-'''
-Created on 26 oct 2021
-
-@author: jorge
-
-'''
 import redis
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import random 
+import uuid
+
 __author__ = 'jorge_perez y miguel_abdon'
 
 
@@ -160,12 +157,155 @@ def menu_cache():
 def ejemplos_cache():
     Persona(nombre = "Ana", apellido = "ligero", edad = 56, ciudad = "Madrid").save()
     Persona(nombre = "jorge", apellido = "perez", edad = 24 , ciudad = "Toledo").save()
-    Persona(nombre = "Miguel", apellido = "Abdon", edad = 20, ciudad = "Madrid").save()
+    Persona(nombre = "Miguel", apellido = "Abdon",
+    edad = 20, ciudad = "Madrid").save()
     Persona(nombre = "Laura", apellido = "diaz", edad = 23, ciudad = "Murcia").save()
-    
+
+
+
+credenciales = {}    
+arrayToken = []
+
+
+
+for x in range(100):  #genero 100 token
+    token = str(uuid.uuid4())
+    arrayToken.append(token) # meto 1 a 1 en el arrayToken
+
+
+
+def introducirCredenciales():
+     
+    nombre = input("Nombre: ")
+    apellido= input("Apellido: ")
+    user = input("User: ")
+    password = input("Password: ")
+    print()
+    privilegio=random.randrange(20)  #numero aleatorio del 0 al 19
+    tokenEscogido = random.choice(arrayToken) 
+
+    credenciales = {"nombre":nombre,"apellido":apellido,"user":user,"password":password,"privilegio":int(privilegio)}
+    #redis.hmset(str(tokenEscogido),credenciales)
+    resultado=redis.hmset(tokenEscogido, credenciales)
+    redis.expire(tokenEscogido,2592000)
+    print("\nPrivilegio: "+str(privilegio))
+    print("Token: "+tokenEscogido)
+    print()
+     
+    if(resultado==1):
+        return {"tokenEscogido":tokenEscogido,"privilegio":privilegio}
+    else:
+        return -1
+
+def buscarCredenciales():
+     
+     tokenBuscado = input("Introduce el token: ")
+     print()
+
+     privilegio=redis.hget(tokenBuscado,"privilegio")
+
+     if(privilegio is not None):
+          print(redis.hgetall(tokenBuscado))
+          return privilegio
+     else:
+          return -1
+
+def actualizarCredenciales(tokenn):
+
+    if not redis.exists(tokenn):
+        print("no existe ese token")
+        return -1
+
+    nombre = input("Nombre: ")
+    apellido= input("Apellido: ")
+    user = input("User: ")
+    password = input("Password: ")
+
+    credenciales = {"nombre":nombre,"apellido":apellido,"user":user,"password":password}
+   
+    redis.hmset(tokenn, credenciales)
+    redis.expire(token,2592000)
+    print(redis.hgetall(tokenn))
+
+    return redis.hgetall(tokenn)
+
+class HelpDesK:
+
+    def funcionRegistar(self):
+        user_id= input("pide usuario: ")
+        redis.zadd("setPriority",{user_id:random.randrange(20)})
+        #redis.zrange("setPriority",0,-1,withscores=True)
+
+    def funcionUsuarios(self):
+        #print(redis.bzpopmax("setPriority",timeout=0)[1])
+        return redis.bzpopmax("setPriority",timeout=0)[1]
+a=HelpDesK()
+
+def menu_API():
+
+    semaforo = True
+    while(semaforo):
+
+        print("1-Sesiones\n2-HelpDesk\n3-Salir\n")
+        opcion = int(input("Elige una opcion: "))
+        
+         
+        if opcion == 1:
+          menu_API_Sesiones()
+          pass
+        elif opcion == 2:
+          menu_API_HelpDesk()
+          pass              
+        elif opcion == 3:
+          print(opcion)
+          semaforo = False
+          
+          
+
+def menu_API_Sesiones():
+
+    semaforo = True
+    while(semaforo):
+
+        print("1-Introducir Credenciales\n2-Actualizar\n3-Buscar\n4-Salir\n")
+        opcion = int(input("Elige una opcion: "))
+        
+         
+        if opcion == 1:
+          introducirCredenciales()
+          pass
+        elif opcion == 2:
+          token = input("dime token: ")
+          actualizarCredenciales(token)
+          pass              
+        elif opcion == 3:
+          buscarCredenciales()
+          pass
+        elif opcion == 4:
+          semaforo = False
+
+def menu_API_HelpDesk():
+
+    semaforo = True
+    while(semaforo):
+
+        print("1-Peticion\n2-Atencion\n3-Salir\n")
+        opcion = int(input("Elige una opcion: "))
+        
+         
+        if opcion == 1:
+          a.funcionRegistar()
+          pass
+        elif opcion == 2:
+          a.funcionUsuarios() 
+          pass             
+        elif opcion == 3:
+          semaforo = False
+
+
 if __name__ == '__main__':
     client = MongoClient('localhost')
-    redis = redis.Redis(host= 'localhost',db = 0)
+    redis = redis.Redis(host= 'localhost',db = 0,decode_responses=True)
     redis.config_set('maxmemory','150mb')
     redis.config_set('maxmemory-policy','volatile-ttl')
     Persona.init_class(client.p1.persona, redis, 'persona.txt')
@@ -173,13 +313,14 @@ if __name__ == '__main__':
     semaforo = True
     
     while(semaforo):
-        print("1-Cache\n2-API\n3-Salir\n");
+
+        print("1-Cache\n2-API\n3-Salir\n")
         opcion = int(input("Elige una opcion: "))
         
         while(semaforo):
             if opcion == 1:
                 menu_cache()
             elif opcion == 2:
-                pass              #<----------------AQUI TU PARTE
+                menu_API()             #<----------------AQUI TU PARTE
             elif opcion == 3:
                 semaforo = False
